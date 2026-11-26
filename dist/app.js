@@ -2,7 +2,7 @@
 
 const byId = (id) => document.getElementById(id);
 const panel = byId("panel");
-const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+const prefersReducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const storageKey = "switchboard.positions.v1";
 
 function loadState() {
@@ -44,8 +44,9 @@ function step(now) {
   frameId = 0;
   const elapsed = lastFrame ? clamp((now - lastFrame) / 1000, .001, .034) : 1 / 60;
   lastFrame = now;
+  const reduceMotion = prefersReducedMotion();
   for (const part of moving) {
-    if (!part.advance(elapsed)) moving.delete(part);
+    if (!part.advance(elapsed, reduceMotion)) moving.delete(part);
   }
   if (moving.size) frameId = requestAnimationFrame(step);
   else lastFrame = 0;
@@ -66,7 +67,7 @@ function spring(element, start, { stiffness = 460, damping = 32 } = {}) {
       part.draw();
     },
     settle(target, speed = 0) {
-      if (reducedMotion.matches) {
+      if (prefersReducedMotion()) {
         part.follow(target);
         return;
       }
@@ -74,8 +75,8 @@ function spring(element, start, { stiffness = 460, damping = 32 } = {}) {
       part.speed = speed;
       animate(part);
     },
-    advance(dt) {
-      if (!reducedMotion.matches) {
+    advance(dt, reduceMotion) {
+      if (!reduceMotion) {
         // Small integration steps keep the spring stable on slower displays.
         const slices = Math.ceil(dt / .008);
         const h = dt / slices;
@@ -341,7 +342,7 @@ lamp(toggle, "data-lit", positions.toggle);
 function flipToggle() {
   positions.toggle = !positions.toggle;
   const target = positions.toggle ? -1 : 1;
-  if (!reducedMotion.matches) lever.follow(lever.value + (target - lever.value) * .32);
+  if (!prefersReducedMotion()) lever.follow(lever.value + (target - lever.value) * .32);
   lever.settle(target, target * 18);
   toggle.setAttribute("aria-checked", positions.toggle);
   lamp(toggle, "data-lit", positions.toggle);
@@ -513,10 +514,10 @@ function saveWheel() {
 }
 
 const flywheel = {
-  advance(dt) {
+  advance(dt, reduceMotion) {
     const previous = wheelOffset;
     wheelSpeed *= Math.exp(-4.2 * dt);
-    if (reducedMotion.matches || Math.abs(wheelSpeed) < 14) {
+    if (reduceMotion || Math.abs(wheelSpeed) < 14) {
       wheelSpeed = 0;
       wheelOffset = mod(wheelOffset, 1800);
       drawWheel();
@@ -554,7 +555,7 @@ interaction(wheel, {
   },
   up(event, cancelled) {
     lamp(wheel, "data-held", false);
-    if (!cancelled && !reducedMotion.matches && event.timeStamp - wheelTouchAt < 95 && Math.abs(wheelSpeed) >= 25) {
+    if (!cancelled && !prefersReducedMotion() && event.timeStamp - wheelTouchAt < 95 && Math.abs(wheelSpeed) >= 25) {
       feedback("wheel", 9, wheelSpeed);
       animate(flywheel);
     }
@@ -585,7 +586,7 @@ paintRocker();
 
 function setRocker(on) {
   const target = on ? -1 : 1;
-  if (!reducedMotion.matches) rockerMotion.follow(rockerMotion.value + (target - rockerMotion.value) * .24);
+  if (!prefersReducedMotion()) rockerMotion.follow(rockerMotion.value + (target - rockerMotion.value) * .24);
   rockerMotion.settle(target, positions.rocker === on ? -target * 8 : target * 12);
   positions.rocker = on;
   paintRocker();

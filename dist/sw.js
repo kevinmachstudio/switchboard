@@ -1,9 +1,9 @@
 "use strict";
 
 const cachePrefix = "switchboard-shell-";
-const cacheName = cachePrefix + "1";
+const cacheName = cachePrefix + "2";
 const scope = new URL(self.registration.scope);
-const shell = new URL("./index.html", scope).href;
+const shell = new URL("./index.html", scope);
 const files = [
   "./",
   "./index.html",
@@ -39,10 +39,10 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   if (url.origin !== scope.origin) return;
-  const asset = request.mode === "navigate" && url.pathname === scope.pathname ? shell : request.url;
+  const isLaunch = url.pathname === scope.pathname || url.pathname === shell.pathname;
+  const asset = request.mode === "navigate" && isLaunch ? shell.href : request.url;
   if (!urls.has(asset)) return;
   event.respondWith((async () => {
-    const cache = await caches.open(cacheName);
-    return await cache.match(asset) || fetch(request);
+    return await caches.match(asset, { cacheName }) || fetch(request);
   })());
 });
