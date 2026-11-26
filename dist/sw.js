@@ -1,7 +1,7 @@
 "use strict";
 
 const cachePrefix = "switchboard-shell-";
-const cacheName = cachePrefix + "2";
+const cacheName = cachePrefix + "3";
 const scope = new URL(self.registration.scope);
 const shell = new URL("./index.html", scope);
 const files = [

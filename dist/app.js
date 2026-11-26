@@ -3,6 +3,10 @@
 const byId = (id) => document.getElementById(id);
 const panel = byId("panel");
 const prefersReducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const standalone = matchMedia("(display-mode: standalone)");
+const isiOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const isInstalled = () => standalone.matches || navigator.standalone === true;
 const storageKey = "switchboard.positions.v1";
 
 function loadState() {
@@ -101,12 +105,32 @@ let audio;
 let master;
 let noiseBuffer;
 const pendingSounds = [];
+const Audio = window.AudioContext || window.webkitAudioContext;
 
-function unlockAudio() {
-  if (positions.muted) return;
+function setAudioSession(type) {
+  if (!isiOS) return;
   try {
-    const Audio = window.AudioContext || window.webkitAudioContext;
-    if (!Audio) return;
+    const session = navigator.audioSession;
+    if (session && session.type !== type) session.type = type;
+  } catch { /* Older versions use the system audio session. */ }
+}
+
+function playQueuedSounds(context) {
+  if (context !== audio || context.state !== "running") return;
+  for (const item of pendingSounds.splice(0)) {
+    if (performance.now() - item.time < 700) sound(item.name, item.value);
+  }
+}
+
+function unlockAudio(event) {
+  if (positions.muted || !Audio || document.hidden) return;
+  // On iOS, a finger release provides activation for starting Web Audio.
+  if (isiOS && audio?.state !== "running" &&
+      (navigator.userActivation?.isActive === false ||
+        event?.type === "pointerdown" && event.pointerType === "touch")) return;
+
+  setAudioSession("playback");
+  try {
     if (!audio) {
       audio = new Audio();
       master = audio.createGain();
@@ -116,16 +140,26 @@ function unlockAudio() {
       const data = noiseBuffer.getChannelData(0);
       for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     }
-    if (audio.state !== "running") {
-      audio.resume().then(() => {
-        const queued = pendingSounds.splice(0);
-        for (const item of queued) {
-          if (performance.now() - item.time < 700) sound(item.name, item.value);
-        }
-      }).catch(() => {});
-    }
+    const context = audio;
+    if (context.state === "running") playQueuedSounds(context);
+    else context.resume().then(() => playQueuedSounds(context)).catch(() => {});
   } catch { /* Sound is optional in restricted contexts. */ }
 }
+
+function releaseAudioSession() {
+  setAudioSession("auto");
+  if (!isiOS || !isInstalled() || !audio) return;
+  // Standalone WebKit can leave a context silent after returning to the foreground.
+  const context = audio;
+  audio = master = noiseBuffer = undefined;
+  pendingSounds.length = 0;
+  context.close().catch(() => {});
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) releaseAudioSession();
+});
+window.addEventListener("pagehide", releaseAudioSession);
 
 function tone(at, start, end, length, gain, type = "sine") {
   const wave = audio.createOscillator();
@@ -226,8 +260,8 @@ const voices = {
 };
 
 function sound(name, value) {
-  if (positions.muted || !audio) return;
-  if (audio.state !== "running") {
+  if (positions.muted || !Audio || document.hidden) return;
+  if (audio?.state !== "running") {
     if (pendingSounds.length === 12) pendingSounds.shift();
     pendingSounds.push({ name, value, time: performance.now() });
     return;
@@ -699,7 +733,10 @@ function toggleMute() {
   positions.muted = !positions.muted;
   mute.setAttribute("aria-pressed", positions.muted);
   if (master) master.gain.value = positions.muted ? 0 : .52;
-  if (positions.muted) pendingSounds.length = 0;
+  if (positions.muted) {
+    pendingSounds.length = 0;
+    setAudioSession("auto");
+  }
   else unlockAudio();
   saveState();
 }
@@ -710,14 +747,11 @@ document.addEventListener("contextmenu", (event) => event.preventDefault());
 const install = byId("install");
 const hint = byId("ios-hint");
 const dismiss = byId("dismiss");
-const standalone = matchMedia("(display-mode: standalone)");
-const isiOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 let installPrompt;
 let hintDismissed = saved.hintDismissed === true;
 
 function syncInstallHint() {
-  const installed = standalone.matches || navigator.standalone === true;
+  const installed = isInstalled();
   hint.hidden = !isiOS || installed || hintDismissed;
   install.hidden = !installPrompt || installed;
 }
