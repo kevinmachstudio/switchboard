@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#191917">
+  <meta name="description" content="Eight tactile controls on one pocket-sized switchboard.">
+  <title>Switchboard</title>
+  <link rel="icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main class="chassis" id="panel" aria-labelledby="title">
+    <span class="screw nw" aria-hidden="true"></span><span class="screw ne" aria-hidden="true"></span>
+    <span class="screw sw" aria-hidden="true"></span><span class="screw se" aria-hidden="true"></span>
+    <header class="nameplate">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <h1 id="title">Switchboard</h1>
+      <span class="pilot lamp" id="pilot" role="img" aria-label="Panel light on"></span>
+    </header>
+
+    <div class="deck">
+      <section class="module">
+        <h2 id="toggle-label">Toggle</h2><span class="lamp" aria-hidden="true"></span>
+        <button class="touch toggle" type="button" id="toggle" role="switch" aria-checked="false" aria-labelledby="toggle-label">
+          <span class="toggle-bed"><span class="washer"></span><span class="toggle-lever"><span></span></span></span>
+        </button>
+      </section>
+
+      <section class="module">
+        <h2 id="arcade-label">Arcade</h2><span class="lamp" aria-hidden="true"></span>
+        <button class="touch arcade" type="button" id="arcade" aria-labelledby="arcade-label">
+          <span class="arcade-rim"><span class="arcade-cap"><span></span></span></span>
+        </button>
+      </section>
+
+      <section class="module">
+        <h2 id="dial-label">Dial</h2><span class="lamp" aria-hidden="true"></span>
+        <div class="touch dial" id="dial" role="slider" tabindex="0" aria-labelledby="dial-label" aria-valuemin="0" aria-valuemax="23" aria-valuenow="0">
+          <svg class="dial-scale" viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="46" pathLength="24" stroke-dasharray=".12 .88" transform="rotate(-90 50 50)"/>
+            <path d="M50 1v8 M50 91v8 M1 50h8 M91 50h8"/>
+          </svg>
+          <span class="dial-knob"><span></span></span>
+        </div>
+      </section>
+      <section class="module">
+        <h2 id="slider-label">Slider</h2><span class="lamp" aria-hidden="true"></span>
+        <div class="touch slider" id="slider" role="slider" tabindex="0" aria-labelledby="slider-label" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="6" aria-valuenow="3">
+          <span class="slider-guide"><span class="slider-slot"></span><span class="slider-grip"></span></span>
+        </div>
+      </section>
+
+      <section class="module">
+        <h2 id="wheel-label">Flick wheel</h2><span class="lamp" aria-hidden="true"></span>
+        <div class="touch wheel" id="wheel" role="slider" tabindex="0" aria-labelledby="wheel-label" aria-valuemin="0" aria-valuemax="179" aria-valuenow="0">
+          <span class="wheel-housing"><span class="wheel-roller"></span></span>
+        </div>
+      </section>
+
+      <section class="module">
+        <h2 id="rocker-label">Rocker</h2><span class="lamp" aria-hidden="true"></span>
+        <button class="touch rocker" type="button" id="rocker" role="switch" aria-checked="false" aria-labelledby="rocker-label">
+          <span class="rocker-frame"><span class="rocker-cap"><span></span><span></span></span></span>
+        </button>
+      </section>
+
+      <section class="module">
+        <h2 id="keypad-label">Keypad</h2><span class="lamp" aria-hidden="true"></span>
+        <div class="keypad" role="group" aria-labelledby="keypad-label">
+          <button type="button" aria-label="Key 1">1</button><button type="button" aria-label="Key 2">2</button><button type="button" aria-label="Key 3">3</button>
+          <button type="button" aria-label="Key 4">4</button><button type="button" aria-label="Key 5">5</button><button type="button" aria-label="Key 6">6</button>
+          <button type="button" aria-label="Key 7">7</button><button type="button" aria-label="Key 8">8</button><button type="button" aria-label="Key 9">9</button>
+        </div>
+      </section>
+
+      <section class="module">
+        <h2 id="cord-label">Pull cord</h2><span class="lamp" aria-hidden="true"></span>
+        <button class="touch cord" type="button" id="cord" role="switch" aria-checked="true" aria-labelledby="cord-label">
+          <span class="cord-assembly"><span class="cord-hole"></span><span class="cord-line"></span><span class="cord-ring"></span></span>
+        </button>
+      </section>
+    </div>
+
+    <footer class="base">
+      <div class="vents" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <button type="button" id="install" class="utility install" hidden>Install</button>
+      <button type="button" id="mute" class="utility mute" aria-label="Mute sound" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 10v4h4l5 4V6l-5 4H3Z"/><path class="sound-waves" d="M15 9a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12"/><path class="sound-off" d="m16 10 5 5m0-5-5 5"/>
+        </svg>
+      </button>
+    </footer>
+    <aside id="ios-hint" class="ios-hint" aria-label="Install Switchboard" hidden>
+      <span>Share &gt; Add to Home Screen</span>
+      <button type="button" id="dismiss" aria-label="Dismiss installation hint">×</button>
+    </aside>
+  </main>
+</body>
+</html>
